@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export default function Signup() {
   const navigate = useNavigate();
 
@@ -14,7 +16,7 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/signup", {
+      const res = await fetch(`${API_URL}/api/auth/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -26,7 +28,6 @@ export default function Signup() {
 
       if (!res.ok) {
         alert(data.error || "Signup failed");
-        setLoading(false);
         return;
       }
 
