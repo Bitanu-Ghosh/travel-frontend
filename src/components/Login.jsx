@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -6,36 +6,57 @@ const API_URL = import.meta.env.VITE_API_URL;
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-
   const redirectTo = location.state?.from || "/dashboard";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // 🔍 DEBUG: check API URL on Vercel
+  useEffect(() => {
+    console.log("✅ VITE_API_URL =", API_URL);
+    if (!API_URL) {
+      alert("❌ API URL missing. Check Vercel Environment Variables.");
+    }
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_URL}/api/auth/login`, {
+      const loginUrl = `${API_URL}/api/auth/login`;
+      console.log("➡️ LOGIN REQUEST TO:", loginUrl);
+
+      const res = await fetch(loginUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({ email, password })
       });
 
       const data = await res.json();
+      console.log("⬅️ LOGIN RESPONSE:", data);
 
       if (!res.ok) {
         alert(data.error || "Login failed");
         return;
       }
 
+      // ✅ SAVE TOKEN
       localStorage.setItem("token", data.token);
+
+      console.log(
+        "🔐 TOKEN SAVED:",
+        localStorage.getItem("token")
+      );
 
       alert("Login successful ✅");
       navigate(redirectTo, { replace: true });
+
     } catch (err) {
+      console.error("❌ LOGIN ERROR:", err);
       alert("Server error");
     } finally {
       setLoading(false);
