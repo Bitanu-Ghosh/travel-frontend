@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export default function Dashboard() {
   const [trips, setTrips] = useState([]);
   const navigate = useNavigate();
@@ -13,12 +15,30 @@ export default function Dashboard() {
       return;
     }
 
-    fetch("http://localhost:5000/api/myTrips", {
-      headers: { Authorization: token }
+    fetch(`${API_URL}/api/myTrips`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     })
-      .then(res => res.json())
-      .then(data => setTrips(data))
-      .catch(() => alert("Failed to load trips"));
+      .then(async (res) => {
+        if (res.status === 401) {
+          // 🔥 token invalid / expired
+          localStorage.removeItem("token");
+          navigate("/login");
+          return [];
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setTrips(data);
+        } else {
+          setTrips([]);
+        }
+      })
+      .catch(() => {
+        alert("Failed to load trips");
+      });
   }, [navigate]);
 
   const handleDelete = async (id) => {
@@ -26,18 +46,19 @@ export default function Dashboard() {
 
     if (!window.confirm("Delete this trip?")) return;
 
-    const res = await fetch(`http://localhost:5000/api/trip/${id}`, {
+    const res = await fetch(`${API_URL}/api/trip/${id}`, {
       method: "DELETE",
-      headers: { Authorization: token }
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     });
 
-    const data = await res.json();
-
-    if (data.message) {
-      setTrips(trips.filter(trip => trip._id !== id));
-    } else {
+    if (!res.ok) {
       alert("Delete failed");
+      return;
     }
+
+    setTrips(trips.filter(trip => trip._id !== id));
   };
 
   return (
@@ -58,6 +79,7 @@ export default function Dashboard() {
                 <p className="text-gray-500">
                   {trip.days} days | Interest: {trip.interest}
                 </p>
+
                 <ul className="list-disc pl-6 mt-2">
                   {trip.plan.map((p, idx) => (
                     <li key={idx}>{p}</li>

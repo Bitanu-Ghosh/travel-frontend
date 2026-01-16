@@ -1,6 +1,8 @@
+const API_URL = import.meta.env.VITE_API_URL;
+
 export async function generateItinerary(destination, days, interest) {
   try {
-    const response = await fetch("http://localhost:5000/api/itinerary", {
+    const response = await fetch(`${API_URL}/api/itinerary`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { DESTINATIONS } from "../data/destinations";
 import { generateItinerary } from "./aihelper";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export default function DestinationDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -29,26 +31,31 @@ export default function DestinationDetails() {
       return;
     }
 
-    const res = await fetch("http://localhost:5000/api/saveTrip", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token
-      },
-      body: JSON.stringify({
-        destination: destination.name,
-        days,
-        interest,
-        plan
-      })
-    });
+    try {
+      const res = await fetch(`${API_URL}/api/saveTrip`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`   // ✅ FIXED
+        },
+        body: JSON.stringify({
+          destination: destination.name,
+          days,
+          interest,
+          plan
+        })
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (data.message) {
+      if (!res.ok) {
+        alert(data.error || "Failed to save trip");
+        return;
+      }
+
       alert("Trip saved ✅");
-    } else {
-      alert("Failed to save trip");
+    } catch (err) {
+      alert("Server error while saving trip");
     }
   };
 
